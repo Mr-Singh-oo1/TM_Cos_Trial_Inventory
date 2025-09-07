@@ -709,37 +709,66 @@
     });
 
     // =========================
-    // 4) Inventory form submission
+    // 4) Inventory form submission (JSON-only)
     // =========================
     const formEl = document.getElementById('invForm');
     const formStatus = document.getElementById('formStatus');
-
+    
     if (formEl) {
       formEl.addEventListener('submit', async (e) => {
         e.preventDefault();
         formStatus.textContent = 'Submitting...';
-
+    
         const fd = new FormData(formEl);
-
+        const file = fd.get("product_image");
+    
+        let base64Image = "";
+        if (file) {
+          const reader = new FileReader();
+          base64Image = await new Promise((resolve) => {
+            reader.onload = () => resolve(reader.result.split(",")[1]); // remove data URI prefix
+            reader.readAsDataURL(file);
+          });
+        }
+    
+        const payload = {
+          product_id: fd.get("product_id"),
+          product_name: fd.get("product_name"),
+          brand_name: fd.get("brand_name"),
+          category: fd.get("category"),
+          subcategory: fd.get("subcategory"),
+          product_unit: fd.get("product_unit"),
+          size_ml: fd.get("size_ml"),
+          mrp: fd.get("mrp"),
+          discount_eligible: fd.get("discount_eligible"),
+          is_active: fd.get("is_active"),
+          batch_number: fd.get("batch_number"),
+          expiry_date: fd.get("expiry_date"),
+          reorder_level: fd.get("reorder_level"),
+          tags: fd.get("tags"),
+          image_base64: base64Image,
+          image_filename: file?.name || ""
+        };
+    
         try {
           const res = await fetch(INVENTORY_LIST_URL, {
             method: 'POST',
-            body: fd
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
           });
-
+    
           const text = await res.text();
-          formStatus.textContent = text.includes('successfully') ? 'Saved ✅' : text;
+          formStatus.textContent = text.includes('Success') ? 'Saved ✅' : text;
           formEl.reset();
-
+    
           if (document.getElementById('inventory-list')?.classList.contains('active')) {
             await loadInventory(true);
           }
         } catch (err) {
-          formStatus.textContent = 'Error: ' + err.message;
+          formStatus.textContent = '❌ Error: ' + err.message;
         }
       });
     }
-
     // =========================
     // 5) Helpers
     // =========================
@@ -976,6 +1005,7 @@
   </script>
 </body>
 </html>
+
 
 
 
