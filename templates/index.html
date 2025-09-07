@@ -908,27 +908,35 @@
     // =========================
     // 7) Selling Form (IDs match your HTML)
     // =========================
+    
+    // 🔧 Replace with your actual Render proxy URL
+    const SALES_API_URL = "https://your-render-app.onrender.com/submit-sale";
+    
+    // Optional: use direct Apps Script URL for inventory fetch
+    const INVENTORY_FETCH_URL = "https://script.google.com/macros/s/AKfycbxs5M0ztA-c5AXuNBIQI9BXGXSEEBnCpKqowE_VdrjWF0aViHvQoDNXuos4tw_o1vkC/exec?action=inventory";
+    
+    // ✅ Load inventory data into datalists
     async function loadSellingInventory() {
       try {
-        const res = await fetch(`${SALES_API_URL}?action=inventory`);
+        const res = await fetch(INVENTORY_FETCH_URL);
         const data = await res.json();
-        console.log('Selling inventory API data:', data); // debug log
-
+        console.log('Selling inventory API data:', data);
+    
         if (!data.ok || !Array.isArray(data.items)) {
           console.warn('No items returned for selling inventory');
           return;
         }
-
+    
         const idList = document.getElementById('productIdList');
         const nameList = document.getElementById('productNameList');
         if (!idList || !nameList) {
           console.error('Datalist elements not found in DOM');
           return;
         }
-
+    
         idList.innerHTML = '';
         nameList.innerHTML = '';
-
+    
         data.items.forEach(item => {
           if (item.id) {
             const optId = document.createElement('option');
@@ -941,70 +949,65 @@
             nameList.appendChild(optName);
           }
         });
-
+    
         console.log(`Populated ${idList.children.length} product IDs and ${nameList.children.length} product names`);
       } catch (err) {
         console.error('Error loading selling inventory:', err);
       }
     }
-
+    
+    // ✅ Handle Selling Form submission
     const saleForm = document.getElementById('saleForm');
-    const saleFormStatus = document.getElementById('formStatus'); // using your existing status div
-
+    const saleFormStatus = document.getElementById('formStatus');
+    
     if (saleForm) {
       saleForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+    
         if (saleFormStatus) {
           saleFormStatus.style.color = '#1e293b';
           saleFormStatus.textContent = 'Saving...';
         }
-
+    
         const payload = {
-          productId: document.getElementById('productId').value.trim(),
-          productName: document.getElementById('productName').value.trim(),
-          price: parseFloat(document.getElementById('price').value),
-          unitsSold: parseInt(document.getElementById('unitsSold').value, 10),
-          customerName: document.getElementById('customerName').value.trim(),
-          mobileNumber: document.getElementById('mobileNumber').value.trim(),
-          paymentMode: document.getElementById('paymentMode').value
+          productId: document.getElementById('productId')?.value.trim(),
+          productName: document.getElementById('productName')?.value.trim(),
+          price: parseFloat(document.getElementById('price')?.value),
+          unitsSold: parseInt(document.getElementById('unitsSold')?.value, 10),
+          customerName: document.getElementById('customerName')?.value.trim(),
+          mobileNumber: document.getElementById('mobileNumber')?.value.trim(),
+          paymentMode: document.getElementById('paymentMode')?.value
         };
-        if (SALES_API_KEY) payload.apiKey = SALES_API_KEY;
-
+    
         try {
           const res = await fetch(SALES_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
+    
           const data = await res.json();
           if (data.ok) {
-            if (saleFormStatus) {
-              saleFormStatus.style.color = 'green';
-              saleFormStatus.textContent = 'Sale recorded successfully!';
-            }
+            saleFormStatus.style.color = 'green';
+            saleFormStatus.textContent = '✅ Sale recorded successfully!';
             saleForm.reset();
           } else {
-            if (saleFormStatus) {
-              saleFormStatus.style.color = 'red';
-              saleFormStatus.textContent = 'Error: ' + (data.error || 'Unknown error');
-            }
+            saleFormStatus.style.color = 'red';
+            saleFormStatus.textContent = '❌ Error: ' + (data.message || 'Unknown error');
           }
         } catch (err) {
-          if (saleFormStatus) {
-            saleFormStatus.style.color = 'red';
-            saleFormStatus.textContent = 'Network error: ' + err.message;
-          }
+          saleFormStatus.style.color = 'red';
+          saleFormStatus.textContent = '❌ Network error: ' + err.message;
         }
       });
     }
-
-    // Optional: auto-load selling inventory if the page opens on that tab
-    if (document.getElementById('Selling-form')?.classList.contains('active')) {
-      loadSellingInventory();
-    }
+    
+    // ✅ Load inventory on page load
+    window.addEventListener('DOMContentLoaded', loadSellingInventory);
   </script>
 </body>
 </html>
+
 
 
 
