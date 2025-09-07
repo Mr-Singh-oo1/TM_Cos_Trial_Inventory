@@ -1,6 +1,7 @@
 from flask import Flask, request, Response, render_template
 import requests
 import warnings
+import json
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from waitress import serve
 
@@ -20,14 +21,15 @@ SALES_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxs5M0ztA-c5AXuNBIQI
 def home():
     return render_template('index.html')  # index.html must be in /templates
 
-# ✅ Proxy route for inventory form
+# ✅ Proxy route for inventory form (JSON-only)
 @app.route('/submit-inventory', methods=['POST'])
 def proxy_inventory():
     try:
+        payload = request.get_json(force=True)
         response = requests.post(
             INVENTORY_SCRIPT_URL,
-            data=request.form,
-            files=request.files
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}
         )
         return Response(
             response.content,
@@ -41,9 +43,11 @@ def proxy_inventory():
 @app.route('/submit-sale', methods=['POST'])
 def proxy_sale():
     try:
+        payload = request.get_json(force=True)
         response = requests.post(
             SALES_SCRIPT_URL,
-            json=request.get_json()
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}
         )
         return Response(
             response.content,
@@ -56,8 +60,3 @@ def proxy_sale():
 # ✅ Use Waitress for production
 if __name__ == '__main__':
     serve(app, host='0.0.0.0', port=8080)
-
-
-
-
-
