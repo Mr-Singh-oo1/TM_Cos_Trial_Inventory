@@ -34,12 +34,12 @@ def proxy_inventory():
         return Response(
             response.content,
             status=response.status_code,
-            content_type=response.headers.get('Content-Type', 'text/plain')
+            content_type='text/plain'
         )
     except Exception as e:
         return Response(f"❌ Inventory Proxy Error: {str(e)}", status=500)
 
-# ✅ Proxy route for selling form (optional)
+# ✅ Proxy route for selling form (JSON-only)
 @app.route('/submit-sale', methods=['POST'])
 def proxy_sale():
     try:
@@ -52,7 +52,7 @@ def proxy_sale():
         return Response(
             response.content,
             status=response.status_code,
-            content_type=response.headers.get('Content-Type', 'application/json')
+            content_type='application/json'
         )
     except Exception as e:
         return Response(f"❌ Sales Proxy Error: {str(e)}", status=500)
