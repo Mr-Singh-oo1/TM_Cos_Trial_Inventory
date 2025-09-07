@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TM Cosmetic Inventory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <!-- DataTables (for inventory table) -->
+  <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --sidebar-bg: #141a22;
+      --sidebar-bg-2: #0f141a;
+      --sidebar-text: #cbd5e1;
+      --sidebar-accent: #00c2ff;
+      --sidebar-hover: #1b2430;
+      --content-bg: #0b1220;
+      --card-bg: #0f172a;
+      --text: #eceef0;
+      --muted: #94a3b8;
+      --primary: #22c55e;
+      --primary-900:#14532d;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --border:#1f2a44;
+      --chip:#1e293b;
+    }
+    *{box-sizing:border-box}
+    
+    body{
+      margin:0;
+      background: linear-gradient(180deg, #0b1220, #0a0f1a);
+      color:var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    a{color:inherit; text-decoration:none}
+
+    
+    input, select {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      border-radius: 4px;
+    }
+
+    label {
+      font-weight: 500;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .grid.cols-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    /* Layout */
+    .app{
+      display:flex;
+      min-height:100dvh;
+    }
+    .sidebar{
+      width:260px;
+      background:linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-2));
+      border-right:1px solid var(--border);
+      transition: width .25s ease;
+      position:sticky;
+      top:0;
+      height:100dvh;
+    }
+    .sidebar.collapsed{ width:76px; }
+
+    .sidebar-header{
+      display:flex; align-items:center; gap:12px;
+      padding:16px 14px;
+      border-bottom:1px solid var(--border);
+    }
+    .burger{
+      width:40px;height:40px; display:grid; place-items:center;
+      background:#0b1118; border:1px solid var(--border); border-radius:10px; cursor:pointer; color:var(--sidebar-text);
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px; overflow:hidden; white-space:nowrap;
+    }
+    .brand .logo{
+      width:36px; height:36px; display:grid; place-items:center; border-radius:10px;
+      background: radial-gradient(100% 100% at 100% 0%, #3b82f6 0%, #22d3ee 80%);
+      color:white;
+    }
+    .brand .title{ font-weight:700; letter-spacing:.2px }
+    .sidebar.collapsed .brand .title{ display:none; }
+
+    .nav{
+      padding:10px 8px;
+    }
+    .nav .group-label{
+      font-size:12px; color:var(--muted); padding:8px 10px; text-transform:uppercase; letter-spacing:.08em;
+    }
+    .nav a.item{
+      display:flex; align-items:center; gap:12px; padding:12px 12px;
+      margin:6px 6px; border-radius:10px; color:var(--sidebar-text);
+      transition: background .2s ease, color .2s ease;
+    }
+    .nav a.item:hover{ background:var(--sidebar-hover); color:#fff; }
+    .nav a.item.active{ background:linear-gradient(180deg,#18212e,#1e293b); color:#fff; border:1px solid #203147; }
+    .nav a .icon{
+      width:42px;height:42px; display:grid; place-items:center;
+      background:#121926; border:1px solid var(--border); border-radius:10px; color:#8ab4ff;
+      flex:0 0 auto;
+    }
+    .nav a .label{ overflow:hidden; white-space:nowrap; }
+    .sidebar.collapsed .nav a .label{ display:none; }
+
+    .content{
+      flex:1; min-width:0;
+      padding:24px;
+    }
+
+    /* Page header */
+    .page-header{
+      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
+    }
+    .chips{ display:flex; gap:10px; flex-wrap:wrap; }
+    .chip{
+      background:var(--chip); border:1px solid var(--border); color:var(--muted);
+      padding:6px 10px; border-radius:999px; font-size:12px;
+    }
+
+    /* Cards / panels */
+    .card{
+      background:linear-gradient(180deg, #fffefe, #7d7e7e 70%);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .card-header{
+      padding:16px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px;
+    }
+    .card-body{ padding:18px; }
+    
+    /* === Inventory List Section Styling (Compact & Updated) === */
+    #inventory-list {
+      background-color: #f9fafb;
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    /* Headings and labels */
+    #inventory-list .card-header,
+    #inventory-list label,
+    #inventory-list th {
+      color: #1e293b !important;
+      font-weight: 600;
+    }
+
+    /* Filter inputs & selects */
+    #inventory-list input,
+    #inventory-list select {
+      background-color: #ffffff;
+      color: #1e293b !important;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+
+    /* Placeholder text */
+    #inventory-list input::placeholder {
+      color: #64748b;
+    }
+
+    /* Filter buttons */
+    #btnClearFilters,
+    #btnRefreshInventory {
+      padding: 5px 10px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+    }
+
+    #btnClearFilters {
+      color: #1e293b !important;
+      background-color: transparent;
+    }
+
+    #btnClearFilters:hover {
+      background-color: #e2e8f0;
+    }
+
+    #btnRefreshInventory {
+      background-color: #1e293b;
+      color: #ffffff;
+    }
+
+    #btnRefreshInventory:hover {
+      background-color: #334155;
+    }
+
+    /* Table styling */
+    #inventory-list table.dataTable {
+      background-color: #ffffff;
+      color: #1e293b;
+      font-size: 13px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    #inventory-list table.dataTable thead th {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 8px;
+    }
+
+    #inventory-list table.dataTable tbody td {
+      padding: 8px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    /* Search bar styling */
+    #inventory-list .dataTables_filter {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    #inventory-list .dataTables_filter label {
+      margin-bottom: 2px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    #inventory-list .dataTables_filter input {
+      background-color: #ffffff;
+      color: #1e293b !important;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 13px;
+    }
+
+    /* Entries dropdown styling */
+    #inventory-list .dataTables_length {
+      margin-right: 12px;
+    }
+
+    #inventory-list .dataTables_length label {
+      color: #1e293b;
+      font-weight: 500;
+    }
+
+    #inventory-list .dataTables_length select {
+      background-color: #ffffff;
+      color: #1e293b !important;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 13px;
+    }
+
+    /* Pagination buttons */
+    #inventory-list .dataTables_paginate {
+      margin-top: 12px;
+    }
+
+    #inventory-list .dataTables_paginate .paginate_button {
+      background-color: transparent;
+      border: 1px solid #cbd5e1;
+      color: #1e293b !important;
+      padding: 5px 10px;
+      margin: 0 2px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    #inventory-list .dataTables_paginate .paginate_button.current {
+      background-color: #e2e8f0;
+      font-weight: bold;
+    }
+
+    #inventory-list .dataTables_paginate .paginate_button:hover {
+      background-color: #e2e8f0;
+    }
+
+    /* Info text & status */
+    #inventory-list .dataTables_info,
+    #inventory-list #tableStatus {
+      color: #1e293b;
+      font-weight: 500;
+      margin-top: 6px;
+    }
+
+    #Selling-form .card-header,
+    #Selling-form label {
+      color: #1e293b; /* Dark slate */
+      font-weight: 500;
+    }
+
+    #Selling-form button.btn {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    /* Selling Form dropdowns: dark text */
+    #Selling-form select {
+      color: #1e293b; /* dark slate */
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* Ensure dropdown options are also dark */
+    #Selling-form select option {
+      color: #1e293b;
+      background-color: #ffffff;
+    }
+
+    /* Dark style for Clear Fields button */
+    #Selling-form .btn-clear {
+      background-color: #1e293b; /* dark slate */
+      color: #ffffff;
+      border: none;
+    }
+
+    #Selling-form .btn-clear:hover {
+      background-color: #0c0d0d; /* slightly lighter on hover */
+    }
+    /* Force dark text inside Inventory and Selling forms */
+    #inventory-form input,
+    #inventory-form select,
+    #inventory-form textarea,
+    #Selling-form input,
+    #Selling-form select,
+    #Selling-form textarea {
+      color: #1e293b !important;       /* dark slate text */
+      background-color: #ffffff;       /* white background */
+      border: 1px solid #cbd5e1;       /* light gray border */
+    }
+
+    /* Placeholder text color */
+    #inventory-form input::placeholder,
+    #inventory-form textarea::placeholder,
+    #Selling-form input::placeholder,
+    #Selling-form textarea::placeholder {
+      color: #64748b; /* medium gray */
+    }
+    #btnRefreshInventory {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    /* Form grid */
+    .grid{
+      display:grid; gap:14px;
+    }
+    @media (min-width:720px){
+      .grid.cols-2{ grid-template-columns: 1fr 1fr; }
+      .grid.cols-3{ grid-template-columns: repeat(3, 1fr); }
+    }
+    label{ font-size:12px; color:var(--muted); display:block; margin-bottom:6px; }
+    input, select, textarea{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+      background:#fbfbfb; color:var(--text); outline:none;
+    }
+    input:focus, select:focus, textarea:focus{ border-color:#272829; box-shadow:0 0 0 3px rgba(43,140,255,.15); }
+    textarea{ min-height:88px; resize:vertical; }
+    .btn{
+      display:inline-flex; align-items:center; gap:10px; border:none; cursor:pointer; border-radius:12px; font-weight:600;
+      padding:12px 16px;
+    }
+    .btn-primary{ background:linear-gradient(180deg, #16a34a, #15803d); color:#fff; border:1px solid #256f47; }
+    .btn-primary:hover{ filter:brightness(1.05); }
+    .btn-ghost{ background:transparent; color:var(--muted); border:1px dashed var(--border); }
+
+    /* Filters bar */
+    .filters{
+      display:grid; gap:12px; margin-bottom:12px;
+    }
+    @media (min-width:900px){
+      .filters{ grid-template-columns: repeat(5, 1fr); align-items:end; }
+    }
+
+    /* Table container */
+    .table-wrap{
+      overflow:auto; border:1px solid var(--border); border-radius:14px; background:#ffffff;
+    }
+    table.dataTable{ color:var(--text); }
+    table.dataTable thead th{ background:#044141; color:#c2c2c5; border-bottom:1px solid var(--border); }
+    table.dataTable tbody tr:nth-child(even){ background:#a8a9a9; }
+    .low-stock{ background: rgba(189, 6, 6, 0.08) !important; }
+    .muted{ color:var(--muted); font-size:13px; }
+
+    /* Section visibility */
+    .section{ display:none; }
+    .section.active{ display:block; }
+
+    /* Collapse helper for tooltips on collapsed sidebar */
+    .tip{ position:relative; }
+    .tip .badge{
+      position:absolute; top:-6px; right:-6px; background:var(--danger); color:#fff;
+      border-radius:999px; font-size:11px; padding:2px 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <button id="toggleSidebar" class="burger" title="Toggle sidebar">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="brand">
+          <div class="logo"><i class="fa-solid fa-flask"></i></div>
+          <div class="title">TM Cosmetic Inventory</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <div class="group-label">Main</div>
+        <a href="#" class="item" data-target="dashboard">
+          <div class="icon tip"><i class="fa-solid fa-chart-pie"></i></div>
+          <div class="label">Dashboard</div>
+        </a>
+        <a href="#" class="item active" data-target="inventory-form">
+          <div class="icon"><i class="fa-solid fa-plus-square"></i></div>
+          <div class="label">Inventory form</div>
+        </a>
+        <a href="#" class="item" data-target="inventory-list">
+          <div class="icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+          <div class="label">Inventory</div>
+        </a>
+        <a href="#" class="item" data-target="Selling-form">
+          <div class="icon"><i class="fa-solid fa-cart-arrow-down"></i></div>
+          <div class="label">Selling form</div>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="page-header">
+        <div>
+          <h2 style="margin:0">Welcome back</h2>
+          <div class="muted">Manage items, track batches, and keep stock fresh.</div>
+        </div>
+        <div class="chips">
+          <span class="chip">Live</span>
+          <span class="chip">Responsive</span>
+          <span class="chip">GAS + Sheets</span>
+        </div>
+      </div>
+
+      <!-- Dashboard (placeholder) -->
+      <section id="dashboard" class="section">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-chart-pie"></i> <strong style="margin-left:8px">Dashboard</strong></div>
+          <div class="card-body">
+            <p class="muted">Coming soon — KPIs, low stock alerts, sales trend, expiry timeline.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Inventory Form -->
+      <section id="inventory-form" class="section active" style="background-color:#ffffff; padding:24px; color:#f0f0f0">
+        <div class="card" style="background-color:#ffffff; border-radius:8px; box-shadow:0 2px 8px rgb(255, 255, 255); padding:20px">
+          <div class="card-header" style="color:#1a1919"><i class="fa-solid fa-plus-square"></i> <strong style="margin-left:8px">Add Inventory Item</strong></div>
+          <div class="card-body">
+            <form id="invForm" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:24px">
+
+              <!-- Product Details -->
+              <fieldset style="background:#f9f9f9; border:1px solid #ccc; padding:16px; border-radius:6px; color:#333">
+                <legend><strong>Product Details</strong></legend>
+                <div style="display:flex; flex-direction:column; gap:12px">
+                  <label>Product ID <input type="text" name="product_id" required></label>
+                  <label>Product Name <input type="text" name="product_name" required></label>
+                  <label>Brand Name <input type="text" name="brand_name"></label>
+                  <label>Category <input type="text" name="category"></label>
+                  <label>Subcategory <input type="text" name="subcategory"></label>
+                  <label>Product Unit <input type="text" name="product_unit" placeholder="e.g., Bottle, Pack"></label>
+                  <label>Size (ml) <input type="number" name="size_ml"></label>
+                </div>
+              </fieldset>
+
+              <!-- Pricing -->
+              <fieldset style="background:#f9f9f9; border:1px solid #ccc; padding:16px; border-radius:6px; color:#333">
+                <legend><strong>Pricing</strong></legend>
+                <div style="display:flex; flex-direction:column; gap:12px">
+                  <label>MRP <input type="number" step="0.01" name="mrp"></label>
+                  <label style="display:flex; align-items:center; gap:10px">
+                    <input type="checkbox" name="discount_eligible" value="Yes" style="width:18px; height:18px"> Discount Eligible
+                  </label>
+                </div>
+              </fieldset>
+
+              <!-- Inventory Info -->
+              <fieldset style="background:#f9f9f9; border:1px solid #ccc; padding:16px; border-radius:6px; color:#333">
+                <legend><strong>Inventory Info</strong></legend>
+                <div style="display:flex; flex-direction:column; gap:12px">
+                  <label>Batch Number <input type="text" name="batch_number"></label>
+                  <label>Expiry Date <input type="date" name="expiry_date"></label>
+                  <label>Reorder Level <input type="number" name="reorder_level"></label>
+                </div>
+              </fieldset>
+
+              <!-- Meta Info -->
+              <fieldset style="background:#f9f9f9; border:1px solid #ccc; padding:16px; border-radius:6px; color:#333">
+                <legend><strong>Meta Info</strong></legend>
+                <div style="display:flex; flex-direction:column; gap:12px">
+                  <label>Tags <input type="text" name="tags" placeholder="comma-separated"></label>
+                  <label>Upload Product Image
+                    <input type="file" name="product_image" accept="image/*">
+                  </label>
+                  <label style="display:flex; align-items:center; gap:10px">
+                    <input type="checkbox" name="is_active" value="Yes" style="width:18px; height:18px"> Is Active
+                  </label>
+                </div>
+              </fieldset>
+
+              <!-- Buttons -->
+              <div style="display:flex; gap:12px">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit</button>
+                <button type="reset" class="btn"><i class="fa-solid fa-eraser"></i> Clear</button>
+                <div id="formStatus" class="muted" style="align-self:center; color:#ccc"></div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Inventory List -->
+      <section id="inventory-list" class="section">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><i class="fa-solid fa-filter"></i> <strong style="margin-left:8px">Filters</strong></div>
+          <div class="card-body">
+            <div class="filters">
+              <div>
+                <label>Brand_id</label>
+                <input type="text" id="f_brand">
+              </div>
+              <div>
+                <label>ProductName</label>
+                <input type="text" id="f_product">
+              </div>
+              <div>
+                <label>ExpiryDate</label>
+                <input type="date" id="f_expiry">
+              </div>
+              <div>
+                <label>BatchNumber</label>
+                <input type="text" id="f_batch">
+              </div>
+              <div>
+                <label>DiscountEligible</label>
+                <select id="f_discount">
+                  <option value="">All</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:8px;">
+              <button id="btnClearFilters" class="btn btn-ghost">
+                <i class="fa-solid fa-broom"></i> Clear filters
+              </button>
+              <button id="btnRefreshInventory" class="btn btn-primary">
+                <i class="fa-solid fa-rotate-right"></i> Refresh
+              </button>
+              <div id="tableStatus" class="muted" style="align-self:center"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-boxes-stacked"></i> <strong style="margin-left:8px">Inventory</strong></div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table id="inventoryTable" class="display" style="width:100%">
+                <thead>
+                  <tr>
+                    <th>Product_id</th>
+                    <th>ProductName</th>
+                    <th>Brand_id</th>
+                    <th>size</th>
+                    <th>unit_of_measurement</th>
+                    <th>MRP</th>
+                    <th>DiscountEligible</th>
+                    <th>IsActive</th>
+                    <th>BatchNumber</th>
+                    <th>ExpiryDate</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Selling Form (placeholder) -->
+      <section id="Selling-form" class="section">
+        <div class="card">
+          <div class="card-header" style="color:#1e293b;">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <strong style="margin-left:8px">Record a Sale</strong>
+          </div>
+          <div class="card-body">
+            <form id="saleForm" style="display:flex; flex-direction:column; gap:12px;">
+
+              <!-- Product ID -->
+              <label for="productId" style="color:#1e293b;">Product ID <span style="color:red">*</span></label>
+              <input list="productIdList" id="productId" name="productId" required>
+              <datalist id="productIdList"></datalist>
+
+              <!-- Product Name -->
+              <label for="productName" style="color:#1e293b;">Product Name <span style="color:red">*</span></label>
+              <input list="productNameList" id="productName" name="productName" required>
+              <datalist id="productNameList"></datalist>
+
+              <!-- Price -->
+              <label for="price" style="color:#1e293b;">Price <span style="color:red">*</span></label>
+              <input type="number" id="price" name="price" step="0.01" required>
+
+              <!-- Units Sold -->
+              <label for="unitsSold" style="color:#1e293b;">Units Sold <span style="color:red">*</span></label>
+              <input type="number" id="unitsSold" name="unitsSold" min="1" required>
+
+              <!-- Customer Name (Optional) -->
+              <label for="customerName" style="color:#1e293b;">Customer Name</label>
+              <input type="text" id="customerName" name="customerName">
+
+              <!-- Mobile Number (Optional) -->
+              <label for="mobileNumber" style="color:#1e293b;">Mobile Number</label>
+              <input type="tel" id="mobileNumber" name="mobileNumber" pattern="[0-9]{10}" placeholder="10-digit number">
+
+              <!-- Payment Mode -->
+              <label for="paymentMode" style="color:#1e293b;">Payment Mode <span style="color:red">*</span></label>
+              <select id="paymentMode" name="paymentMode" required>
+                <option value="">Select</option>
+                <option value="Cash">Cash</option>
+                <option value="Pending">Pending</option>
+                <option value="Online">Online</option>
+              </select>
+
+              <!-- Buttons -->
+              <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
+                <button type="submit" class="btn btn-primary" style="padding:6px 12px; font-size:14px;">
+                  <i class="fa-solid fa-save"></i> Save Sale
+                </button>
+                <button type="reset" class="btn" style="padding:6px 12px; font-size:14px;">
+                  <i class="fa-solid fa-eraser"></i> Clear Fields
+                </button>
+                <div id="formStatus" class="muted" style="margin-left:10px;"></div>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <!-- jQuery + DataTables -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+  <script>
+    // =========================
+    // 1) API endpoints
+    // =========================
+    const INVENTORY_LIST_URL = "https://script.google.com/macros/s/AKfycbyZhQRHpyJdp3DUSnsNZE-jD0wkS69-hsj0AH8pUzWt_qQFLuKGyMFGYXhJfFMmOefq_g/exec"; // existing inventory list endpoint
+    const SALES_API_URL = "https://script.google.com/macros/s/AKfycbxs5M0ztA-c5AXuNBIQI9BXGXSEEBnCpKqowE_VdrjWF0aViHvQoDNXuos4tw_o1vkC/exec"; // new combined API endpoint
+    const SALES_API_KEY = ""; // optional
+
+    // =========================
+    // 2) Sidebar collapse
+    // =========================
+    const sidebar = document.getElementById('sidebar');
+    document.getElementById('toggleSidebar').addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      if (window.inventoryDT) {
+        setTimeout(() => window.inventoryDT.columns.adjust().draw(false), 300);
+      }
+    });
+
+    // =========================
+    // 3) SPA navigation
+    // =========================
+    const navLinks = document.querySelectorAll('.nav a.item');
+    const sections = document.querySelectorAll('.section');
+    navLinks.forEach(link => {
+      link.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const target = link.getAttribute('data-target');
+        navLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        sections.forEach(s => s.classList.remove('active'));
+        document.getElementById(target).classList.add('active');
+
+        if (target === 'inventory-list') {
+          await loadInventory();
+        } else if (target === 'Selling-form') {
+          await loadSellingInventory();
+        }
+      });
+    });
+
+    // =========================
+    // 4) Inventory form submission
+    // =========================
+    const formEl = document.getElementById('invForm');
+    const formStatus = document.getElementById('formStatus');
+
+    if (formEl) {
+      formEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        formStatus.textContent = 'Submitting...';
+
+        const fd = new FormData(formEl); // This automatically includes the image file
+
+        try {
+          const res = await fetch(INVENTORY_LIST_URL, {
+            method: 'POST',
+            body: fd
+          });
+
+          const text = await res.text();
+          formStatus.textContent = text.includes('successfully') ? 'Saved ✅' : text;
+          formEl.reset();
+
+          if (document.getElementById('inventory-list')?.classList.contains('active')) {
+            await loadInventory(true);
+          }
+        } catch (err) {
+          formStatus.textContent = 'Error: ' + err.message;
+        }
+      });
+    }
+
+    // =========================
+    // 5) Helpers
+    // =========================
+    function normKey(k) {
+      return String(k || '').toLowerCase().replace(/[\s_()]/g, '').replace(/name$/, 'name');
+    }
+    const COLS = [
+      'product_id','productname','brand_id','size','unit_of_measurement','mrp',
+      'discounteligible','isactive','batchnumber','expirydate'
+    ];
+    function toCanonical(rowObj) {
+      const map = {};
+      for (const [k, v] of Object.entries(rowObj)) map[normKey(k)] = v;
+      return {
+        product_id: map.productid || map['product_id'] || map['product id'] || map['product_code'] || '',
+        productname: map.productname || map['product_name'] || '',
+        brand_id: map.brandid || map['brand_id'] || map.brand || map.brandname || map['brand name'] || '',
+        size: map.size || map['sizeml'] || map['size(ml)'] || map['size_ml'] || '',
+        unit_of_measurement: map.unitofmeasurement || map['unit'] || map['productunit'] || map['unit_of_measurement'] || '',
+        mrp: map.mrp || '',
+        discounteligible: map.discounteligible || map['discounteligible?'] || map['discount_eligible'] || '',
+        isactive: map.isactive || map['is_active'] || '',
+        batchnumber: map.batchnumber || map['batch_number'] || '',
+        expirydate: map.expirydate || map['expiry_date'] || ''
+      };
+    }
+
+    // =========================
+    // 6) Inventory list table
+    // =========================
+    let rawData = [];
+    let filtered = [];
+    let initialized = false;
+    const tableStatus = document.getElementById('tableStatus');
+
+    async function fetchData() {
+      try {
+        if (tableStatus) tableStatus.textContent = 'Loading...';
+        const res = await fetch(INVENTORY_LIST_URL);
+        const json = await res.json();
+        rawData = json.map(toCanonical).filter(r => r.product_id || r.productname);
+        if (tableStatus) tableStatus.textContent = `Loaded ${rawData.length} items`;
+      } catch (e) {
+        if (tableStatus) tableStatus.textContent = 'Failed to load';
+        console.error(e);
+      }
+    }
+
+    function applyFilters() {
+      const qBrand = document.getElementById('f_brand')?.value.trim().toLowerCase() || '';
+      const qProd = document.getElementById('f_product')?.value.trim().toLowerCase() || '';
+      const qExpiry = document.getElementById('f_expiry')?.value || '';
+      const qBatch = document.getElementById('f_batch')?.value.trim().toLowerCase() || '';
+      const qDisc  = document.getElementById('f_discount')?.value || '';
+
+      filtered = rawData.filter(r => {
+        const okBrand = !qBrand || String(r.brand_id || '').toLowerCase().includes(qBrand);
+        const okProd  = !qProd  || String(r.productname || '').toLowerCase().includes(qProd);
+        const okBatch = !qBatch || String(r.batchnumber || '').toLowerCase().includes(qBatch);
+        const okDisc  = !qDisc  || String(r.discounteligible || '').toLowerCase() === qDisc.toLowerCase();
+        let okExpiry = true;
+        if (qExpiry) okExpiry = (String(r.expirydate || '').slice(0,10) === qExpiry);
+        return okBrand && okProd && okBatch && okDisc && okExpiry;
+      });
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector('#inventoryTable tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      filtered.forEach(r => {
+        const tr = document.createElement('tr');
+        const cells = [
+          r.product_id, r.productname, r.brand_id, r.size, r.unit_of_measurement,
+          r.mrp, r.discounteligible, r.isactive, r.batchnumber, r.expirydate
+        ];
+        cells.forEach(c => {
+          const td = document.createElement('td');
+          td.textContent = c == null ? '' : c;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      if (!initialized) {
+        window.inventoryDT = $('#inventoryTable').DataTable({
+          pageLength: 10,
+          lengthMenu: [10, 25, 50, 100],
+          order: []
+        });
+        initialized = true;
+      } else {
+        window.inventoryDT.clear();
+        $('#inventoryTable tbody tr').each(function() {
+          const rowData = Array.from(this.children).map(td => td.textContent);
+          window.inventoryDT.row.add(rowData);
+        });
+        window.inventoryDT.draw(false);
+      }
+    }
+
+    async function loadInventory(force = false) {
+      if (!initialized || force) {
+        await fetchData();
+      }
+      applyFilters();
+      renderTable();
+    }
+
+    // Filter events
+    ['f_brand','f_product','f_expiry','f_batch','f_discount'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => { applyFilters(); renderTable(); });
+      el.addEventListener('change', () => { applyFilters(); renderTable(); });
+    });
+    const btnClearFilters = document.getElementById('btnClearFilters');
+    if (btnClearFilters) {
+      btnClearFilters.addEventListener('click', () => {
+        ['f_brand','f_product','f_expiry','f_batch','f_discount'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        applyFilters(); renderTable();
+      });
+    }
+    loadInventory();
+    // Refresh inventory button
+    const btnRefreshInventory = document.getElementById('btnRefreshInventory');
+    if (btnRefreshInventory) {
+      btnRefreshInventory.addEventListener('click', async () => {
+        tableStatus.textContent = 'Refreshing...';
+        await loadInventory(true); // force reload from API
+      });
+    }
+
+    // =========================
+    // 7) Selling Form (IDs match your HTML)
+    // =========================
+    async function loadSellingInventory() {
+      try {
+        const res = await fetch(`${SALES_API_URL}?action=inventory`);
+        const data = await res.json();
+        console.log('Selling inventory API data:', data); // debug log
+
+        if (!data.ok || !Array.isArray(data.items)) {
+          console.warn('No items returned for selling inventory');
+          return;
+        }
+
+        const idList = document.getElementById('productIdList');
+        const nameList = document.getElementById('productNameList');
+        if (!idList || !nameList) {
+          console.error('Datalist elements not found in DOM');
+          return;
+        }
+
+        idList.innerHTML = '';
+        nameList.innerHTML = '';
+
+        data.items.forEach(item => {
+          if (item.id) {
+            const optId = document.createElement('option');
+            optId.value = item.id;
+            idList.appendChild(optId);
+          }
+          if (item.name) {
+            const optName = document.createElement('option');
+            optName.value = item.name;
+            nameList.appendChild(optName);
+          }
+        });
+
+        console.log(`Populated ${idList.children.length} product IDs and ${nameList.children.length} product names`);
+      } catch (err) {
+        console.error('Error loading selling inventory:', err);
+      }
+    }
+
+    const saleForm = document.getElementById('saleForm');
+    const saleFormStatus = document.getElementById('formStatus'); // using your existing status div
+
+    if (saleForm) {
+      saleForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (saleFormStatus) {
+          saleFormStatus.style.color = '#1e293b';
+          saleFormStatus.textContent = 'Saving...';
+        }
+
+        const payload = {
+          productId: document.getElementById('productId').value.trim(),
+          productName: document.getElementById('productName').value.trim(),
+          price: parseFloat(document.getElementById('price').value),
+          unitsSold: parseInt(document.getElementById('unitsSold').value, 10),
+          customerName: document.getElementById('customerName').value.trim(),
+          mobileNumber: document.getElementById('mobileNumber').value.trim(),
+          paymentMode: document.getElementById('paymentMode').value
+        };
+        if (SALES_API_KEY) payload.apiKey = SALES_API_KEY;
+
+        try {
+          const res = await fetch(SALES_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (data.ok) {
+            if (saleFormStatus) {
+              saleFormStatus.style.color = 'green';
+              saleFormStatus.textContent = 'Sale recorded successfully!';
+            }
+            saleForm.reset();
+          } else {
+            if (saleFormStatus) {
+              saleFormStatus.style.color = 'red';
+              saleFormStatus.textContent = 'Error: ' + (data.error || 'Unknown error');
+            }
+          }
+        } catch (err) {
+          if (saleFormStatus) {
+            saleFormStatus.style.color = 'red';
+            saleFormStatus.textContent = 'Network error: ' + err.message;
+          }
+        }
+      });
+    }
+
+    // Optional: auto-load selling inventory if the page opens on that tab
+    if (document.getElementById('Selling-form')?.classList.contains('active')) {
+      loadSellingInventory();
+    }
+  </script>
+</body>
+</html>
