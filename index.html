@@ -669,9 +669,9 @@
     // =========================
     // 1) API endpoints
     // =========================
-    const INVENTORY_LIST_URL = "https://script.google.com/macros/s/AKfycbyZhQRHpyJdp3DUSnsNZE-jD0wkS69-hsj0AH8pUzWt_qQFLuKGyMFGYXhJfFMmOefq_g/exec"; // existing inventory list endpoint
-    const SALES_API_URL = "https://script.google.com/macros/s/AKfycbxs5M0ztA-c5AXuNBIQI9BXGXSEEBnCpKqowE_VdrjWF0aViHvQoDNXuos4tw_o1vkC/exec"; // new combined API endpoint
-    const SALES_API_KEY = ""; // optional
+    const INVENTORY_LIST_URL = "https://tm-cos-trial-inventory-2.onrender.com/submit-inventory"; // updated to proxy
+    const SALES_API_URL = "https://script.google.com/macros/s/AKfycbxs5M0ztA-c5AXuNBIQI9BXGXSEEBnCpKqowE_VdrjWF0aViHvQoDNXuos4tw_o1vkC/exec";
+    const SALES_API_KEY = "";
 
     // =========================
     // 2) Sidebar collapse
@@ -717,7 +717,7 @@
         e.preventDefault();
         formStatus.textContent = 'Submitting...';
 
-        const fd = new FormData(formEl); // This automatically includes the image file
+        const fd = new FormData(formEl);
 
         try {
           const res = await fetch(INVENTORY_LIST_URL, {
@@ -776,7 +776,7 @@
     async function fetchData() {
       try {
         if (tableStatus) tableStatus.textContent = 'Loading...';
-        const res = await fetch(INVENTORY_LIST_URL);
+        const res = await fetch("https://script.google.com/macros/s/AKfycbyZhQRHpyJdp3DUSnsNZE-jD0wkS69-hsj0AH8pUzWt_qQFLuKGyMFGYXhJfFMmOefq_g/exec");
         const json = await res.json();
         rawData = json.map(toCanonical).filter(r => r.product_id || r.productname);
         if (tableStatus) tableStatus.textContent = `Loaded ${rawData.length} items`;
@@ -847,13 +847,13 @@
       renderTable();
     }
 
-    // Filter events
     ['f_brand','f_product','f_expiry','f_batch','f_discount'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener('input', () => { applyFilters(); renderTable(); });
       el.addEventListener('change', () => { applyFilters(); renderTable(); });
     });
+
     const btnClearFilters = document.getElementById('btnClearFilters');
     if (btnClearFilters) {
       btnClearFilters.addEventListener('click', () => {
@@ -864,6 +864,7 @@
         applyFilters(); renderTable();
       });
     }
+
     loadInventory();
     // Refresh inventory button
     const btnRefreshInventory = document.getElementById('btnRefreshInventory');
@@ -873,7 +874,6 @@
         await loadInventory(true); // force reload from API
       });
     }
-
     // =========================
     // 7) Selling Form (IDs match your HTML)
     // =========================
@@ -974,4 +974,5 @@
   </script>
 </body>
 </html>
+
 
