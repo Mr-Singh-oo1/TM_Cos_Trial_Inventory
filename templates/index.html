@@ -466,59 +466,62 @@
       <!-- Inventory Form -->
       <section id="inventory-form" class="section active" style="background-color:#ffffff; padding:24px; color:#f0f0f0">
         <div class="card" style="background-color:#ffffff; border-radius:8px; box-shadow:0 2px 8px rgb(255, 255, 255); padding:20px">
-          <div class="card-header" style="color:#1a1919"><i class="fa-solid fa-plus-square"></i> <strong style="margin-left:8px">Add Inventory Item</strong></div>
+          <div class="card-header" style="color:#1a1919">
+            <i class="fa-solid fa-plus-square"></i>
+            <strong style="margin-left:8px">Add Inventory Item</strong>
+          </div>
           <div class="card-body">
-            <form id="invForm" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:24px">
-
+            <form id="invForm" style="display:flex; flex-direction:column; gap:24px">
+      
               <!-- Product Details -->
               <fieldset style="background:#f9f9f9; border:1px solid #ccc; padding:16px; border-radius:6px; color:#333">
                 <legend><strong>Product Details</strong></legend>
                 <div style="display:flex; flex-direction:column; gap:12px">
-                  <label>Product ID <input type="text" name="product_id" required></label>
-                  <label>Product Name <input type="text" name="product_name" required></label>
-                  <label>Brand Name <input type="text" name="brand_name"></label>
-                  <label>Category <input type="text" name="category"></label>
-                  <label>Subcategory <input type="text" name="subcategory"></label>
-                  <label>Product Unit <input type="text" name="product_unit" placeholder="e.g., Bottle, Pack"></label>
-                  <label>Size (ml) <input type="number" name="size_ml"></label>
+                  <label>Product ID <input type="text" name="product_id" id="product_id" required></label>
+                  <label>Product Name <input type="text" name="product_name" id="product_name" required></label>
+                  <label>Brand Name <input type="text" name="brand_name" id="brand_name"></label>
+                  <label>Category <input type="text" name="category" id="category"></label>
+                  <label>Subcategory <input type="text" name="subcategory" id="subcategory"></label>
+                  <label>Product Unit <input type="text" name="product_unit" id="product_unit" placeholder="e.g., Bottle, Pack"></label>
+                  <label>Size (ml) <input type="number" name="size_ml" id="size_ml"></label>
                 </div>
               </fieldset>
-
+      
               <!-- Pricing -->
               <fieldset style="background:#f9f9f9; border:1px solid #ccc; padding:16px; border-radius:6px; color:#333">
                 <legend><strong>Pricing</strong></legend>
                 <div style="display:flex; flex-direction:column; gap:12px">
-                  <label>MRP <input type="number" step="0.01" name="mrp"></label>
+                  <label>MRP <input type="number" step="0.01" name="mrp" id="mrp"></label>
                   <label style="display:flex; align-items:center; gap:10px">
-                    <input type="checkbox" name="discount_eligible" value="Yes" style="width:18px; height:18px"> Discount Eligible
+                    <input type="checkbox" name="discount_eligible" id="discount_eligible" value="Yes" style="width:18px; height:18px"> Discount Eligible
                   </label>
                 </div>
               </fieldset>
-
+      
               <!-- Inventory Info -->
               <fieldset style="background:#f9f9f9; border:1px solid #ccc; padding:16px; border-radius:6px; color:#333">
                 <legend><strong>Inventory Info</strong></legend>
                 <div style="display:flex; flex-direction:column; gap:12px">
-                  <label>Batch Number <input type="text" name="batch_number"></label>
-                  <label>Expiry Date <input type="date" name="expiry_date"></label>
-                  <label>Reorder Level <input type="number" name="reorder_level"></label>
+                  <label>Batch Number <input type="text" name="batch_number" id="batch_number"></label>
+                  <label>Expiry Date <input type="date" name="expiry_date" id="expiry_date"></label>
+                  <label>Reorder Level <input type="number" name="reorder_level" id="reorder_level"></label>
                 </div>
               </fieldset>
-
+      
               <!-- Meta Info -->
               <fieldset style="background:#f9f9f9; border:1px solid #ccc; padding:16px; border-radius:6px; color:#333">
                 <legend><strong>Meta Info</strong></legend>
                 <div style="display:flex; flex-direction:column; gap:12px">
-                  <label>Tags <input type="text" name="tags" placeholder="comma-separated"></label>
+                  <label>Tags <input type="text" name="tags" id="tags" placeholder="comma-separated"></label>
                   <label>Upload Product Image
-                    <input type="file" name="product_image" accept="image/*">
+                    <input type="file" name="product_image" id="product_image" accept="image/*" capture="environment">
                   </label>
                   <label style="display:flex; align-items:center; gap:10px">
-                    <input type="checkbox" name="is_active" value="Yes" style="width:18px; height:18px"> Is Active
+                    <input type="checkbox" name="is_active" id="is_active" value="Yes" style="width:18px; height:18px"> Is Active
                   </label>
                 </div>
               </fieldset>
-
+      
               <!-- Buttons -->
               <div style="display:flex; gap:12px">
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit</button>
@@ -529,7 +532,6 @@
           </div>
         </div>
       </section>
-
       <!-- Inventory List -->
       <section id="inventory-list" class="section">
         <div class="card" style="margin-bottom:14px">
@@ -974,5 +976,6 @@
   </script>
 </body>
 </html>
+
 
 
