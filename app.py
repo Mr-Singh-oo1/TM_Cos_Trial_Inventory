@@ -39,7 +39,7 @@ def proxy_inventory():
     except Exception as e:
         return Response(f"❌ Inventory Proxy Error: {str(e)}", status=500)
 
-# ✅ Proxy route for selling form (JSON-only)
+# ✅ Proxy route for selling form (JSON-wrapped)
 @app.route('/submit-sale', methods=['POST'])
 def proxy_sale():
     try:
@@ -49,8 +49,13 @@ def proxy_sale():
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}
         )
+        # Wrap the response to match frontend expectations
+        wrapped = {
+            "ok": True,
+            "items": response.json() if response.content else []
+        }
         return Response(
-            response.content,
+            json.dumps(wrapped),
             status=response.status_code,
             content_type='application/json'
         )
@@ -60,4 +65,3 @@ def proxy_sale():
 # ✅ Use Waitress for production
 if __name__ == '__main__':
     serve(app, host='0.0.0.0', port=8080)
-
