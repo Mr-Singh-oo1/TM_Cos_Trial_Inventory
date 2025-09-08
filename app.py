@@ -49,11 +49,17 @@ def proxy_sale():
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}
         )
-        # Wrap the response to match frontend expectations
+
+        try:
+            parsed = response.json()
+        except ValueError:
+            parsed = {"message": response.text}
+
         wrapped = {
             "ok": True,
-            "items": response.json() if response.content else []
+            "items": [parsed] if isinstance(parsed, dict) else parsed
         }
+
         return Response(
             json.dumps(wrapped),
             status=response.status_code,
@@ -65,3 +71,4 @@ def proxy_sale():
 # ✅ Use Waitress for production
 if __name__ == '__main__':
     serve(app, host='0.0.0.0', port=8080)
+
