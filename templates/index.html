@@ -61,7 +61,10 @@
 
     .app {
       display: flex;
+      flex-direction: row;
       min-height: 100vh;
+      width: 100%;
+      overflow: hidden;
     }
 
     .sidebar {
@@ -69,8 +72,11 @@
       background: linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-2));
       border-right: 1px solid var(--border);
       transition: width 0.25s ease;
-      position: sticky;
+      flex-shrink: 0;
+      position: fixed;
       top: 0;
+      left: 0;
+      z-index: 1000;
       height: 100vh;
     }
 
@@ -184,12 +190,11 @@
     .sidebar.collapsed .nav a .label { display: none; }
 
     .content {
-      flex: 1;
-      min-width: 0;
+      margin-left: 76px; /* Match collapsed sidebar */
+      flex-grow: 1;
       padding: 24px;
-      transition: all 0.3s ease;
+      transition: margin-left 0.3s ease;
     }
-
     .section {
       display: none;
       opacity: 0;
@@ -334,7 +339,7 @@
 <body>
   <div class="app">
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar">
+    <aside id="sidebar" class="sidebar collapsed">
       <div class="sidebar-header">
         <button id="toggleSidebar" class="burger" title="Toggle sidebar">
           <i class="fa-solid fa-bars"></i>
@@ -718,7 +723,11 @@
     }
   </script>
   <script>
-  // === Inventory Table Logic ===
+  const COLS1 = [
+    'product_id', 'productname', 'brand_id', 'size', 'unit_of_measurement',
+    'mrp', 'discounteligible', 'isactive', 'batchnumber', 'expirydate'
+  ];
+
   let rawData = [];
   let filtered = [];
   let initialized = false;
@@ -726,13 +735,13 @@
 
   async function fetchData() {
     try {
-      if (tableStatus) tableStatus.textContent = 'Loading...';
+      tableStatus.textContent = 'Loading...';
       const res = await fetch("https://script.google.com/macros/s/AKfycbyZhQRHpyJdp3DUSnsNZE-jD0wkS69-hsj0AH8pUzWt_qQFLuKGyMFGYXhJfFMmOefq_g/exec");
       const json = await res.json();
       rawData = json.map(toCanonical).filter(r => r.product_id || r.productname);
-      if (tableStatus) tableStatus.textContent = `Loaded ${rawData.length} items`;
+      tableStatus.textContent = `Loaded ${rawData.length} items`;
     } catch (e) {
-      if (tableStatus) tableStatus.textContent = 'Failed to load';
+      tableStatus.textContent = 'Failed to load';
       console.error(e);
     }
   }
@@ -759,25 +768,22 @@
     const tbody = document.querySelector('#inventoryTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
+
     filtered.forEach(r => {
       const tr = document.createElement('tr');
       const cells = [
         r.product_id, r.productname, r.brand_id, r.size, r.unit_of_measurement,
         r.mrp, r.discounteligible, r.isactive, r.batchnumber, r.expirydate
       ];
+
       cells.forEach((c, i) => {
         const td = document.createElement('td');
-      
-        // Format expiry date to show only YYYY-MM-DD
-        if (COLS[i] === 'expirydate' && c) {
-          const dateOnly = String(c).slice(0, 10); // Assumes format like "2025-09-13T00:00:00Z"
-          td.textContent = dateOnly;
-        } else {
-          td.textContent = c == null ? '' : c;
-        }
-      
+        td.textContent = (COLS1[i] === 'expirydate' && c) ? String(c).slice(0, 10) : (c ?? '');
         tr.appendChild(td);
       });
+
+      tbody.appendChild(tr);
+    });
 
     if (!initialized) {
       window.inventoryDT = $('#inventoryTable').DataTable({
@@ -816,7 +822,7 @@
   const btnClearFilters = document.getElementById('btnClearFilters');
   if (btnClearFilters) {
     btnClearFilters.addEventListener('click', () => {
-      ['f_brand','f_product','f_expiry','f_batch','f_discount'].forEach(id => {
+      ['f_product_id','f_product','f_expiry','f_batch','f_discount'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -927,5 +933,4 @@
 </script>
 </body>
 </html>
-
 
