@@ -797,12 +797,12 @@
   if (saleForm) {
     saleForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
+  
       if (saleFormStatus) {
         saleFormStatus.style.color = '#1e293b';
         saleFormStatus.textContent = 'Saving...';
       }
-
+  
       const payload = {
         productId: document.getElementById('productId')?.value.trim(),
         productName: document.getElementById('productName')?.value.trim(),
@@ -812,19 +812,24 @@
         mobileNumber: document.getElementById('mobileNumber')?.value.trim(),
         paymentMode: document.getElementById('paymentMode')?.value
       };
-
+  
       try {
         const res = await fetch(SALES_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-
+  
         const data = await res.json();
         if (data.ok) {
           saleFormStatus.style.color = 'green';
           saleFormStatus.textContent = '✅ Sale recorded successfully!';
           saleForm.reset();
+  
+          // Keep message visible for 5 seconds
+          setTimeout(() => {
+            saleFormStatus.textContent = '';
+          }, 5000);
         } else {
           saleFormStatus.style.color = 'red';
           saleFormStatus.textContent = '❌ Error: ' + (data.message || 'Unknown error');
@@ -835,9 +840,9 @@
       }
     });
   }
-
   // === Load Selling Inventory on Page Load ===
   window.addEventListener('DOMContentLoaded', loadSellingInventory);
 </script>
 </body>
 </html>
+
