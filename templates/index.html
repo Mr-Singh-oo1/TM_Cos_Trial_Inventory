@@ -61,10 +61,7 @@
 
     .app {
       display: flex;
-      flex-direction: row;
       min-height: 100vh;
-      width: 100%;
-      overflow: hidden;
     }
 
     .sidebar {
@@ -72,11 +69,8 @@
       background: linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-2));
       border-right: 1px solid var(--border);
       transition: width 0.25s ease;
-      flex-shrink: 0;
-      position: fixed;
+      position: sticky;
       top: 0;
-      left: 0;
-      z-index: 1000;
       height: 100vh;
     }
 
@@ -190,11 +184,12 @@
     .sidebar.collapsed .nav a .label { display: none; }
 
     .content {
-      margin-left: 76px; /* Match collapsed sidebar */
-      flex-grow: 1;
+      flex: 1;
+      min-width: 0;
       padding: 24px;
-      transition: margin-left 0.3s ease;
+      transition: all 0.3s ease;
     }
+
     .section {
       display: none;
       opacity: 0;
@@ -339,7 +334,7 @@
 <body>
   <div class="app">
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar collapsed">
+    <aside id="sidebar" class="sidebar">
       <div class="sidebar-header">
         <button id="toggleSidebar" class="burger" title="Toggle sidebar">
           <i class="fa-solid fa-bars"></i>
