@@ -760,13 +760,19 @@
         r.product_id, r.productname, r.brand_id, r.size, r.unit_of_measurement,
         r.mrp, r.discounteligible, r.isactive, r.batchnumber, r.expirydate
       ];
-      cells.forEach(c => {
+      cells.forEach((c, i) => {
         const td = document.createElement('td');
-        td.textContent = c == null ? '' : c;
+      
+        // Format expiry date to show only YYYY-MM-DD
+        if (COLS[i] === 'expirydate' && c) {
+          const dateOnly = String(c).slice(0, 10); // Assumes format like "2025-09-13T00:00:00Z"
+          td.textContent = dateOnly;
+        } else {
+          td.textContent = c == null ? '' : c;
+        }
+      
         tr.appendChild(td);
       });
-      tbody.appendChild(tr);
-    });
 
     if (!initialized) {
       window.inventoryDT = $('#inventoryTable').DataTable({
@@ -916,3 +922,4 @@
 </script>
 </body>
 </html>
+
