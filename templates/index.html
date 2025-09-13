@@ -13,7 +13,7 @@
     :root {
       --sidebar-bg: #141a22;
       --sidebar-bg-2: #0f141a;
-      --sidebar-text: #cbd5e1;
+      --sidebar-text: #fcfcfc;
       --sidebar-accent: #00c2ff;
       --sidebar-hover: #1b2430;
       --content-bg: #0b1220;
@@ -82,7 +82,9 @@
       gap: 12px;
       padding: 16px 14px;
       border-bottom: 1px solid var(--border);
+      justify-content: flex-start;
     }
+
 
     .burger {
       width: 40px;
@@ -100,19 +102,16 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      overflow: hidden;
       white-space: nowrap;
+      font-weight: 700;
+      letter-spacing: .2px;
     }
 
+
     .brand .logo {
-      width: 36px;
-      height: 36px;
-      display: grid;
-      place-items: center;
-      border-radius: 10px;
-      background: radial-gradient(100% 100% at 100% 0%, #3b82f6 0%, #22d3ee 80%);
-      color: white;
+      display: none; /* Hide the logo */
     }
+
 
     .brand .title { font-weight: 700; letter-spacing: .2px; }
 
@@ -150,7 +149,15 @@
       background: linear-gradient(180deg,#18212e,#1e293b);
       color: #fff;
       border: 1px solid #203147;
+      margin-left: auto;
+      margin-right: auto;
+      width: calc(100% - 12px);
     }
+    .sidebar.collapsed .nav a.item.active {
+      width: 60px;
+      margin: 0 auto;
+    }
+
 
     .nav a .icon {
       width: 42px;
@@ -190,15 +197,7 @@
       opacity: 1;
       transform: translateY(0);
     }
-    /* DataTables: Entries dropdown */
-    #inventory-list .dataTables_length label,
-    #inventory-list .dataTables_length select {
-      background-color: #18232e;
-      color: #c8c9cb !important;
-      font-weight: 500;
-      font-size: 13px;
-    }
-
+    
     /* DataTables: Pagination buttons */
     #inventory-list .dataTables_paginate .paginate_button {
       background-color: #f1f5f9;
@@ -243,6 +242,7 @@
       .sidebar {
         width: 100%;
         height: auto;
+        position: relative;
       }
 
       .content {
@@ -252,6 +252,77 @@
       .grid.cols-3 {
         grid-template-columns: 1fr;
       }
+
+      form {
+        width: 100%;
+      }
+
+      .card {
+        margin-bottom: 16px;
+      }
+
+      .sidebar-header {
+        justify-content: space-between;
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(180deg, #0b1220, #0a0f1a);
+        color: var(--text);
+      }
+
+      .card {
+        background-color: #1e293b;
+        color: #f0f0f0;
+      }
+
+      input, select, textarea {
+        background-color: #0f172a;
+        color: #f0f0f0;
+        border: 1px solid #334155;
+      }
+
+      .btn {
+        background-color: #334155;
+        color: #fff;
+      }
+    }
+
+    @media (prefers-color-scheme: light) {
+      body {
+        background: #f8fafc;
+        color: #1e293b;
+      }
+
+      .card {
+        background-color: #ffffff;
+        color: #1e293b;
+      }
+
+      input, select, textarea {
+        background-color: #ffffff;
+        color: #1e293b;
+        border: 1px solid #cbd5e1;
+      }
+
+      .btn {
+        background-color: #e2e8f0;
+        color: #1e293b;
+      }
+    }
+    #inventory-form,
+    #Selling-form {
+      background-color: #ffffff;
+      color: #1e293b;
+    }
+
+    #inventory-form .card,
+    #Selling-form .card {
+      background-color: #ffffff;
+      color: #1e293b;
+    }
+    body, .card, input, select, textarea {
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
   </style>
 </head>
@@ -459,7 +530,7 @@
       <!-- Selling Form -->
       <section id="Selling-form" class="section">
         <div class="card">
-          <div class="card-header" style="color:#ffffff; background-color:#1e293b;">
+          <div class="card-header">
             <i class="fa-solid fa-cart-shopping"></i>
             <strong style="margin-left:8px">Record a Sale</strong>
           </div>
@@ -467,33 +538,33 @@
             <form id="saleForm" style="display:flex; flex-direction:column; gap:12px;">
 
               <!-- Product ID -->
-              <label for="productId" style="color:#e0e0e0;">Product ID <span style="color:red">*</span></label>
+              <label for="productId">Product ID <span style="color:red">*</span></label>
               <input list="productIdList" id="productId" name="productId" required>
               <datalist id="productIdList"></datalist>
 
               <!-- Product Name -->
-              <label for="productName" style="color:#e0e0e0;">Product Name <span style="color:red">*</span></label>
+              <label for="productName">Product Name <span style="color:red">*</span></label>
               <input list="productNameList" id="productName" name="productName" required>
               <datalist id="productNameList"></datalist>
 
               <!-- Price -->
-              <label for="price" style="color:#e0e0e0;">Price <span style="color:red">*</span></label>
+              <label for="price">Price <span style="color:red">*</span></label>
               <input type="number" id="price" name="price" step="0.01" required>
 
               <!-- Units Sold -->
-              <label for="unitsSold" style="color:#e0e0e0;">Units Sold <span style="color:red">*</span></label>
+              <label for="unitsSold">Units Sold <span style="color:red">*</span></label>
               <input type="number" id="unitsSold" name="unitsSold" min="1" required>
 
               <!-- Customer Name (Optional) -->
-              <label for="customerName" style="color:#e0e0e0;">Customer Name</label>
+              <label for="customerName">Customer Name</label>
               <input type="text" id="customerName" name="customerName">
 
               <!-- Mobile Number (Optional) -->
-              <label for="mobileNumber" style="color:#e0e0e0;">Mobile Number</label>
+              <label for="mobileNumber">Mobile Number</label>
               <input type="tel" id="mobileNumber" name="mobileNumber" pattern="[0-9]{10}" placeholder="10-digit number">
 
               <!-- Payment Mode -->
-              <label for="paymentMode" style="color:#e0e0e0;">Payment Mode <span style="color:red">*</span></label>
+              <label for="paymentMode">Payment Mode <span style="color:red">*</span></label>
               <select id="paymentMode" name="paymentMode" required>
                 <option value="">Select</option>
                 <option value="Cash">Cash</option>
@@ -845,4 +916,3 @@
 </script>
 </body>
 </html>
-
